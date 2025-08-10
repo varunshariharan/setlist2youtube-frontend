@@ -10,31 +10,16 @@
 
   async function getAccessToken(){
     return new Promise((resolve, reject) => {
-      const redirectUrl = chrome.identity.getRedirectURL();
-      const clientId = '945658462648-56p9aknbjm8omo6crqer91dftr4rcejk.apps.googleusercontent.com';
-      const scopes = 'https://www.googleapis.com/auth/youtube';
-      const authUrl = `https://accounts.google.com/o/oauth2/auth?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUrl)}&scope=${encodeURIComponent(scopes)}`;
-      
-      chrome.identity.launchWebAuthFlow({
-        url: authUrl,
-        interactive: true
-      }, (responseUrl) => {
+      chrome.identity.getAuthToken({ interactive: true }, (token) => {
         if (chrome.runtime.lastError) {
           reject(new Error(chrome.runtime.lastError.message));
           return;
         }
-        if (!responseUrl) {
-          reject(new Error('No response URL'));
+        if (!token) {
+          reject(new Error('No access token received'));
           return;
         }
-        // Extract access_token from URL hash
-        const urlParams = new URLSearchParams(responseUrl.split('#')[1]);
-        const accessToken = urlParams.get('access_token');
-        if (accessToken) {
-          resolve(accessToken);
-        } else {
-          reject(new Error('No access token in response'));
-        }
+        resolve(token);
       });
     });
   }

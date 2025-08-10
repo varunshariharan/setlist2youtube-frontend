@@ -4,11 +4,18 @@
   "version": "0.1.0",
   "description": "Convert a setlist.fm page into a YouTube playlist in one click.",
   "permissions": [
-    "tabs", "activeTab", "storage", "scripting", "identity"],
+    "tabs", 
+    "activeTab", 
+    "storage", 
+    "scripting", 
+    "identity"
+  ],
   "host_permissions": [
     "https://www.setlist.fm/*",
     "https://www.googleapis.com/*"
-  ]",
+  ],
+  "oauth2": {
+    "client_id": "${GOOGLE_CLIENT_ID}",
     "scopes": ["https://www.googleapis.com/auth/youtube"]
   },
   "action": {
