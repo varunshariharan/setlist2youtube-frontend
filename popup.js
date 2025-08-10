@@ -1,3 +1,4 @@
+const API_BASE_URL = (typeof process!=="undefined" && process.env && process.env.S2Y_API_BASE) || "http://localhost:4000";
 (function(){
   var logEl = document.getElementById('log');
   function log(msg){ logEl.textContent += (msg + '\n'); }

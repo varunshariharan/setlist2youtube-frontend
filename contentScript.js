@@ -3,8 +3,22 @@
     if (window.s2y && typeof window.s2y.createConvertButton === 'function'){
       var btn = window.s2y.createConvertButton(document);
       btn.addEventListener('click', function(){
-        // Placeholder: parsing and messaging to background/popup will be added later
-        console.log('Setlist2YouTube: Convert clicked');
+        try {
+          var html = (document.documentElement && document.documentElement.outerHTML) || (document.body && document.body.outerHTML) || '';
+          var apiBase = (typeof window !== 'undefined' && window.S2Y_API_BASE) || 'http://localhost:4000';
+          fetch(apiBase + '/api/parse', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ html: html })
+          })
+          .then(function(r){ return r.json(); })
+          .then(function(data){
+            console.log('Parsed setlist:', data);
+          })
+          .catch(function(err){ console.error('Parse error', err); });
+        } catch (e) {
+          console.error('Failed to serialize page HTML', e);
+        }
       });
     }
   }
