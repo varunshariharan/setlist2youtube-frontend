@@ -11,3 +11,7 @@ coverage/
 # Tooling
 .vscode/
 .idea/
+
+# Local environment
+.env
+manifest.json
