@@ -48,7 +48,12 @@
       }
       
       chrome.tabs.sendMessage(tab.id, { type: 'S2Y_GET_HTML' }, async function(payload){
-        if (!payload || !payload.html){ log('❌ Failed to read page HTML'); return; }
+        if (!payload || !payload.html){ 
+          log('❌ Failed to read page HTML');
+          log('Debug: Make sure you are on a setlist.fm page and the extension is loaded properly');
+          return; 
+        }
+        
         try {
           log('📄 Parsing setlist...');
           const parseRes = await fetch(API_BASE + '/api/parse', { 
@@ -56,13 +61,21 @@
             headers:{'Content-Type':'application/json'}, 
             body: JSON.stringify({ html: payload.html }) 
           });
-          if (!parseRes.ok){ throw new Error('Parse failed: ' + parseRes.status); }
+          
+          if (!parseRes.ok){ 
+            const errorText = await parseRes.text();
+            log('❌ Parse API error: ' + parseRes.status);
+            log('Error details: ' + errorText);
+            return;
+          }
+          
           const data = await parseRes.json();
           const songs = Array.isArray(data.songs) ? data.songs : [];
           log('✓ Found ' + songs.length + ' songs for ' + (data.artist || 'Unknown Artist'));
 
           if (songs.length === 0) {
             log('❌ No songs found in setlist');
+            log('This might be a page layout we do not support yet');
             return;
           }
 
@@ -71,17 +84,29 @@
           for (const song of songs){
             idx += 1;
             log('🔍 [' + idx + '/' + songs.length + '] ' + song.title + ' – ' + song.artist);
-            const res = await fetch(API_BASE + '/api/youtube/search', { 
-              method:'POST', 
-              headers:{'Content-Type':'application/json'}, 
-              body: JSON.stringify({ accessToken: token, title: song.title, artist: song.artist }) 
-            });
-            const js = await res.json();
-            if (js && js.videoId){ 
-              videoIds.push(js.videoId); 
-              log('  ✓ Found video');
-            } else { 
-              log('  ❌ Not found'); 
+            
+            try {
+              const res = await fetch(API_BASE + '/api/youtube/search', { 
+                method:'POST', 
+                headers:{'Content-Type':'application/json'}, 
+                body: JSON.stringify({ accessToken: token, title: song.title, artist: song.artist }) 
+              });
+              
+              if (res.ok) {
+                const js = await res.json();
+                if (js && js.videoId){ 
+                  videoIds.push(js.videoId); 
+                  log('  ✓ Found video');
+                } else { 
+                  log('  ❌ Not found'); 
+                  s2yUnfound.push(song);
+                }
+              } else {
+                log('  ❌ Search failed: ' + res.status);
+                s2yUnfound.push(song);
+              }
+            } catch (searchError) {
+              log('  ❌ Search error: ' + (searchError && searchError.message || searchError));
               s2yUnfound.push(song);
             }
           }
@@ -91,7 +116,7 @@
             return;
           }
 
-          const playlistTitle = `${data.artist || 'Artist'} – Setlist at ${data.venue || 'Venue'}, ${data.date || ''}`.trim();
+          const playlistTitle = `${data.artist || 'Artist'} – Setlist Playlist`;
           log('🎵 Creating playlist: ' + playlistTitle);
           const playlistRes = await fetch(API_BASE + '/api/youtube/playlist', { 
             method:'POST', 
@@ -103,19 +128,27 @@
               videoIds 
             }) 
           });
-          const playlistJson = await playlistRes.json();
-          if (playlistJson && playlistJson.playlistId){
-            const url = 'https://www.youtube.com/playlist?list=' + playlistJson.playlistId;
-            log('✅ Success! Opening playlist...');
-            if (s2yUnfound.length > 0) {
-              log('⚠️  ' + s2yUnfound.length + ' songs not found');
+          
+          if (playlistRes.ok) {
+            const playlistJson = await playlistRes.json();
+            if (playlistJson && playlistJson.playlistId){
+              const url = 'https://www.youtube.com/playlist?list=' + playlistJson.playlistId;
+              log('✅ Success! Opening playlist...');
+              if (s2yUnfound.length > 0) {
+                log('⚠️  ' + s2yUnfound.length + ' songs not found');
+              }
+              chrome.tabs.create({ url });
+            } else {
+              log('❌ Failed to create playlist - invalid response');
             }
-            chrome.tabs.create({ url });
           } else {
-            log('❌ Failed to create playlist');
+            const errorText = await playlistRes.text();
+            log('❌ Failed to create playlist: ' + playlistRes.status);
+            log('Error: ' + errorText);
           }
         } catch (e) {
           log('❌ Error: ' + (e && e.message || e));
+          console.error('Full error:', e);
         }
       });
     });

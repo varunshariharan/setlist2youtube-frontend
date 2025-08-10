@@ -16,7 +16,7 @@
   ],
   "oauth2": {
     "client_id": "${GOOGLE_CLIENT_ID}",
-    "scopes": ["https://www.googleapis.com/auth/youtube"]
+    "scopes": ["openid email profile"]
   },
   "action": {
     "default_popup": "popup.html",
@@ -34,7 +34,7 @@
   "content_scripts": [
     {
       "matches": ["https://www.setlist.fm/*"],
-      "js": ["contentScript.js"],
+      "js": ["src/lib/inject.js", "contentScript.js"],
       "run_at": "document_idle"
     }
   ],
