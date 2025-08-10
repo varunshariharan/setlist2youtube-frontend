@@ -1,5 +1,4 @@
 
-import { signInWithGoogle } from "./src/lib/auth.js";
 (function(){
   var logEl = document.getElementById('log');
   function log(msg){ logEl.textContent += (msg + '
@@ -11,6 +10,19 @@ import { signInWithGoogle } from "./src/lib/auth.js";
     localStorage.setItem('s2y_access_token', val('accessToken'));
     localStorage.setItem('s2y_privacy', val('privacy'));
     log('Saved config.');
+  }
+
+  
+  async function getAccessToken(){
+    return new Promise((resolve, reject) => {
+      try {
+        chrome.identity.getAuthToken({ interactive: true }, (token) => {
+          if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
+          if (!token) return reject(new Error('No token'));
+          resolve(token);
+        });
+      } catch (e) { reject(e); }
+    });
   }
 
   function loadCfg(){
@@ -25,11 +37,11 @@ import { signInWithGoogle } from "./src/lib/auth.js";
 
   document.getElementById('saveCfg').addEventListener('click', saveCfg);
 
-  document.getElementById('signIn').addEventListener('click', async function(){
+  /* removed signIn */
     try {
       const res = await signInWithGoogle(["https://www.googleapis.com/auth/youtube"]);
-      document.getElementById('accessToken').value = res.accessToken;
-      localStorage.setItem('s2y_access_token', res.accessToken);
+      
+      
       log('Signed in successfully.');
     } catch (e) {
       log('Sign-in failed: ' + (e && e.message || e));
@@ -48,9 +60,7 @@ import { signInWithGoogle } from "./src/lib/auth.js";
 
   document.getElementById('createBtn').addEventListener('click', function(){
     const apiBase = val('apiBase');
-    const token = val('accessToken');
     const privacy = val('privacy');
-    if (!token){ log('Missing access token.'); return; }
 
     withActiveTab(function(tab){
       if (!tab) { log('No active tab.'); return; }
@@ -64,7 +74,8 @@ import { signInWithGoogle } from "./src/lib/auth.js";
             const videoIds = [];
             for (const song of (data.songs||[])){
               const q = { accessToken: token, title: song.title, artist: song.artist };
-              const res = await fetch(apiBase + '/api/youtube/search', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(q) });
+              const token = await getAccessToken();
+            const res = await fetch(apiBase + '/api/youtube/search', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(q) });
               const js = await res.json();
               if (js && js.videoId){ videoIds.push(js.videoId); }
               log('Search ' + song.title + ' -> ' + (js.videoId || 'not found'));
