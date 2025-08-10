@@ -1,0 +1,26 @@
+{
+  "name": "setlist2youtube-frontend",
+  "version": "0.1.0",
+  "description": "This repository contains the Chrome extension that converts a setlist from setlist.fm into a playable YouTube playlist.",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest --run",
+    "test:watch": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/varunshariharan/setlist2youtube-frontend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/varunshariharan/setlist2youtube-frontend/issues"
+  },
+  "homepage": "https://github.com/varunshariharan/setlist2youtube-frontend#readme",
+  "devDependencies": {
+    "jsdom": "^26.1.0",
+    "vitest": "^3.2.4"
+  }
+}

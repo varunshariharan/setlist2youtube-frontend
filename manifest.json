@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Setlist2YouTube",
+  "version": "0.1.0",
+  "description": "Convert a setlist.fm page into a YouTube playlist in one click.",
+  "permissions": ["activeTab", "storage", "scripting", "identity"],
+  "host_permissions": [
+    "https://www.setlist.fm/*",
+    "https://www.googleapis.com/*"
+  ],
+  "oauth2": {
+    "client_id": "<GOOGLE_CLIENT_ID>",
+    "scopes": ["https://www.googleapis.com/auth/youtube"]
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Setlist2YouTube"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.setlist.fm/*"],
+      "js": ["src/lib/inject.js", "contentScript.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
