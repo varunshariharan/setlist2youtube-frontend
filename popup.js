@@ -3,16 +3,9 @@
   var logEl = document.getElementById('log');
   function log(msg){ logEl.textContent += (msg + '
 '); }
+  function clearLog(){ logEl.textContent = ''; }
   function val(id){ return document.getElementById(id).value; }
 
-  function saveCfg(){
-    localStorage.setItem('s2y_api_base', val('apiBase'));
-    localStorage.setItem('s2y_access_token', val('accessToken'));
-    localStorage.setItem('s2y_privacy', val('privacy'));
-    log('Saved config.');
-  }
-
-  
   async function getAccessToken(){
     return new Promise((resolve, reject) => {
       try {
@@ -25,9 +18,14 @@
     });
   }
 
+  function saveCfg(){
+    localStorage.setItem('s2y_api_base', val('apiBase'));
+    localStorage.setItem('s2y_privacy', val('privacy'));
+    log('Saved config.');
+  }
+
   function loadCfg(){
     document.getElementById('apiBase').value = localStorage.getItem('s2y_api_base') || 'http://localhost:4000';
-    document.getElementById('accessToken').value = localStorage.getItem('s2y_access_token') || '';
     document.getElementById('privacy').value = localStorage.getItem('s2y_privacy') || 'unlisted';
   }
 
@@ -37,59 +35,66 @@
 
   document.getElementById('saveCfg').addEventListener('click', saveCfg);
 
-  /* removed signIn */
-    try {
-      const res = await signInWithGoogle(["https://www.googleapis.com/auth/youtube"]);
-      
-      
-      log('Signed in successfully.');
-    } catch (e) {
-      log('Sign-in failed: ' + (e && e.message || e));
-    }
-  });
-
-
   document.getElementById('parseBtn').addEventListener('click', function(){
-    withActiveTab(function(tab){
-      if (!tab) { log('No active tab.'); return; }
-      chrome.tabs.sendMessage(tab.id, { type: 'S2Y_ACTIVATE' }, function(){
-        log('Activated on current page.');
-      });
-    });
-  });
-
-  document.getElementById('createBtn').addEventListener('click', function(){
-    const apiBase = val('apiBase');
-    const privacy = val('privacy');
-
     withActiveTab(function(tab){
       if (!tab) { log('No active tab.'); return; }
       chrome.tabs.sendMessage(tab.id, { type: 'S2Y_GET_HTML' }, function(payload){
         if (!payload || !payload.html){ log('Failed to read page HTML.'); return; }
-        fetch(apiBase + '/api/parse', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ html: payload.html }) })
-          .then(r => r.json())
-          .then(async data => {
-            log('Parsed setlist for ' + data.artist + ' with ' + (data.songs||[]).length + ' songs.');
-            // Search videos sequentially
-            const videoIds = [];
-            for (const song of (data.songs||[])){
-              const q = { accessToken: token, title: song.title, artist: song.artist };
-              const token = await getAccessToken();
-            const res = await fetch(apiBase + '/api/youtube/search', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(q) });
-              const js = await res.json();
-              if (js && js.videoId){ videoIds.push(js.videoId); }
-              log('Search ' + song.title + ' -> ' + (js.videoId || 'not found'));
-            }
-            const title = `${data.artist} – Setlist at ${data.venue}, ${data.date}`;
-            const playlistRes = await fetch(apiBase + '/api/youtube/playlist', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ accessToken: token, title, privacyStatus: privacy, videoIds }) });
-            const playlistJson = await playlistRes.json();
-            if (playlistJson && playlistJson.playlistId){
-              log('✅ Playlist created: ' + playlistJson.playlistId);
-            } else {
-              log('⚠ Failed to create playlist.');
-            }
-          })
-          .catch(err => { log('Error: ' + err.message); });
+        log('HTML read OK (' + payload.html.length + ' chars).');
+      });
+    });
+  });
+
+  document.getElementById('createBtn').addEventListener('click', async function(){
+    clearLog();
+    const apiBase = val('apiBase');
+    const privacy = val('privacy');
+    log('Starting…');
+    let token;
+    try {
+      token = await getAccessToken();
+      log('Got access token.');
+    } catch (e) {
+      log('Auth error: ' + (e && e.message || e));
+      return;
+    }
+
+    withActiveTab(function(tab){
+      if (!tab) { log('No active tab.'); return; }
+      chrome.tabs.sendMessage(tab.id, { type: 'S2Y_GET_HTML' }, async function(payload){
+        if (!payload || !payload.html){ log('Failed to read page HTML.'); return; }
+        try {
+          log('Parsing setlist…');
+          const parseRes = await fetch(apiBase + '/api/parse', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ html: payload.html }) });
+          if (!parseRes.ok){ throw new Error('Parse failed: ' + parseRes.status); }
+          const data = await parseRes.json();
+          const songs = Array.isArray(data.songs) ? data.songs : [];
+          log('Parsed ' + songs.length + ' songs for ' + (data.artist || 'Unknown Artist'));
+
+          const videoIds = [];
+          let idx = 0;
+          for (const song of songs){
+            idx += 1;
+            log('Searching [' + idx + '/' + songs.length + ']: ' + song.title + ' – ' + song.artist);
+            const res = await fetch(apiBase + '/api/youtube/search', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ accessToken: token, title: song.title, artist: song.artist }) });
+            const js = await res.json();
+            if (js && js.videoId){ videoIds.push(js.videoId); log('  ✓ ' + js.videoId); } else { log('  ✗ not found'); }
+          }
+
+          const playlistTitle = `${data.artist || 'Artist'} – Setlist at ${data.venue || 'Venue'}, ${data.date || ''}`.trim();
+          log('Creating playlist: ' + playlistTitle);
+          const playlistRes = await fetch(apiBase + '/api/youtube/playlist', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ accessToken: token, title: playlistTitle, privacyStatus: privacy, videoIds }) });
+          const playlistJson = await playlistRes.json();
+          if (playlistJson && playlistJson.playlistId){
+            const url = 'https://www.youtube.com/playlist?list=' + playlistJson.playlistId;
+            log('✅ Playlist created: ' + url);
+            chrome.tabs.create({ url });
+          } else {
+            log('⚠ Failed to create playlist.');
+          }
+        } catch (e) {
+          log('Error: ' + (e && e.message || e));
+        }
       });
     });
   });
