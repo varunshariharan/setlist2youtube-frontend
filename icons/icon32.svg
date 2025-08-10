@@ -1,0 +1,19 @@
+<svg width="32" height="32" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="stageGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0b1020"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="256" height="256" fill="url(#stageGrad)"/>
+  <rect x="0" y="200" width="256" height="56" fill="#0a0f1f"/>
+  <circle cx="125" cy="105" r="14" fill="#e5e7eb"/>
+  <rect x="118" y="118" width="14" height="40" rx="6" fill="#e5e7eb"/>
+  <rect x="112" y="156" width="10" height="36" rx="5" fill="#e5e7eb" transform="rotate(12 117 174)"/>
+  <rect x="130" y="156" width="10" height="36" rx="5" fill="#e5e7eb" transform="rotate(-8 135 174)"/>
+  <circle cx="155" cy="128" r="16" fill="#ff6b6b"/>
+  <rect x="138" y="120" width="44" height="6" rx="3" fill="#ff6b6b" transform="rotate(-12 160 123)"/>
+  <rect x="180" y="115" width="10" height="8" rx="2" fill="#ff9f43" transform="rotate(-12 185 119)"/>
+  <rect x="92" y="98" width="4" height="70" fill="#9ca3af" transform="rotate(-10 94 133)"/>
+  <circle cx="95" cy="98" r="6" fill="#9ca3af"/>
+</svg>
