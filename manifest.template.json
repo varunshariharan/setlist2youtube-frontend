@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "description": "Convert a setlist.fm page into a YouTube playlist in one click.",
   "permissions": [
+    "webNavigation", 
     "tabs", 
     "activeTab", 
     "storage", 
