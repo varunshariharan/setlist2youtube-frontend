@@ -1,0 +1,13 @@
+# Node/JS
+node_modules/
+dist/
+coverage/
+*.log
+
+# Env/OS
+.env
+.DS_Store
+
+# Tooling
+.vscode/
+.idea/
