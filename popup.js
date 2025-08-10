@@ -1,5 +1,7 @@
 
 (function(){
+  let s2yLogs = [];
+  let s2yUnfound = [];
   var logEl = document.getElementById('log');
   function log(msg){ logEl.textContent += (msg + '
 '); }
@@ -34,6 +36,44 @@
   }
 
   document.getElementById('saveCfg').addEventListener('click', saveCfg);
+
+  
+  document.getElementById('viewLogs').addEventListener('click', async function(){
+    try {
+      await navigator.clipboard.writeText(s2yLogs.join('
+'));
+      log('Logs copied to clipboard.');
+    } catch(e){ log('Failed to copy logs.'); }
+  });
+
+  document.getElementById('retryBtn').addEventListener('click', async function(){
+    const apiBase = document.getElementById('apiBase').value;
+    const privacy = document.getElementById('privacy').value;
+    let token;
+    try { token = await getAccessToken(); } catch(e){ log('Auth error: ' + (e && e.message || e)); return; }
+    if (!Array.isArray(s2yUnfound) || s2yUnfound.length === 0){ log('No unfound songs to retry.'); return; }
+
+    const videoIds = [];
+    let idx = 0;
+    for (const song of s2yUnfound){
+      idx += 1;
+      log('[Retry ' + idx + '/' + s2yUnfound.length + '] ' + song.title + ' – ' + song.artist);
+      const res = await fetch(apiBase + '/api/youtube/search', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ accessToken: token, title: song.title, artist: song.artist }) });
+      const js = await res.json();
+      if (js && js.videoId){ videoIds.push(js.videoId); log('  ✓ ' + js.videoId); } else { log('  ✗ not found'); s2yUnfound.push(song); }
+    }
+    if (videoIds.length === 0){ log('No matches found on retry.'); return; }
+    const title = 'Supplemental Setlist Videos';
+    const playlistRes = await fetch(apiBase + '/api/youtube/playlist', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ accessToken: token, title, privacyStatus: privacy, videoIds }) });
+    const playlistJson = await playlistRes.json();
+    if (playlistJson && playlistJson.playlistId){
+      const url = 'https://www.youtube.com/playlist?list=' + playlistJson.playlistId;
+      log('✅ Supplemental playlist created: ' + url);
+      chrome.tabs.create({ url });
+    } else {
+      log('⚠ Failed to create supplemental playlist.');
+    }
+  });
 
   document.getElementById('parseBtn').addEventListener('click', function(){
     withActiveTab(function(tab){
@@ -78,7 +118,7 @@
             log('Searching [' + idx + '/' + songs.length + ']: ' + song.title + ' – ' + song.artist);
             const res = await fetch(apiBase + '/api/youtube/search', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ accessToken: token, title: song.title, artist: song.artist }) });
             const js = await res.json();
-            if (js && js.videoId){ videoIds.push(js.videoId); log('  ✓ ' + js.videoId); } else { log('  ✗ not found'); }
+            if (js && js.videoId){ videoIds.push(js.videoId); log('  ✓ ' + js.videoId); } else { log('  ✗ not found'); s2yUnfound.push(song); }
           }
 
           const playlistTitle = `${data.artist || 'Artist'} – Setlist at ${data.venue || 'Venue'}, ${data.date || ''}`.trim();
