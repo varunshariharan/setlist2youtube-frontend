@@ -29,9 +29,20 @@
   }
 
   // Allow manual activation via popup
-  chrome.runtime.onMessage.addListener(function(message){
+  chrome.runtime.onMessage.addListener(function(message, sender, sendResponse){
     if (message && message.type === 'S2Y_ACTIVATE'){
       ensureButton();
+      sendResponse({ ok: true });
+      return true;
+    }
+    if (message && message.type === 'S2Y_GET_HTML'){
+      try {
+        var html = (document.documentElement && document.documentElement.outerHTML) || (document.body && document.body.outerHTML) || '';
+        sendResponse({ html: html });
+      } catch(e){
+        sendResponse({ error: String(e) });
+      }
+      return true;
     }
   });
 })();
