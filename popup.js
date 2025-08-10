@@ -1,4 +1,5 @@
 
+import { signInWithGoogle } from "./src/lib/auth.js";
 (function(){
   var logEl = document.getElementById('log');
   function log(msg){ logEl.textContent += (msg + '
@@ -23,6 +24,18 @@
   }
 
   document.getElementById('saveCfg').addEventListener('click', saveCfg);
+
+  document.getElementById('signIn').addEventListener('click', async function(){
+    try {
+      const res = await signInWithGoogle(["https://www.googleapis.com/auth/youtube"]);
+      document.getElementById('accessToken').value = res.accessToken;
+      localStorage.setItem('s2y_access_token', res.accessToken);
+      log('Signed in successfully.');
+    } catch (e) {
+      log('Sign-in failed: ' + (e && e.message || e));
+    }
+  });
+
 
   document.getElementById('parseBtn').addEventListener('click', function(){
     withActiveTab(function(tab){
