@@ -8,9 +8,7 @@
   "host_permissions": [
     "https://www.setlist.fm/*",
     "https://www.googleapis.com/*"
-  ],
-  "oauth2": {
-    "client_id": "${GOOGLE_CLIENT_ID}",
+  ]",
     "scopes": ["https://www.googleapis.com/auth/youtube"]
   },
   "action": {
