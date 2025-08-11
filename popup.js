@@ -110,6 +110,10 @@
       displayJobStatus();
     } catch (e) {
       console.error('Failed to get job status:', e);
+      if (e.message && e.message.includes('Receiving end does not exist')) {
+        log('⚠️ Extension connection error. Try reloading the extension.');
+        log('💡 Go to chrome://extensions/ and click reload for Setlist2YouTube');
+      }
     }
   }
 
@@ -161,6 +165,15 @@
 
     } catch (e) {
       log('❌ Error starting playlist creation: ' + (e && e.message || e));
+      if (e.message && e.message.includes('Receiving end does not exist')) {
+        log('');
+        log('🔧 Connection Error Detected:');
+        log('1. Go to chrome://extensions/');
+        log('2. Find "Setlist2YouTube" extension');
+        log('3. Click the "Reload" button 🔄');
+        log('4. Refresh this setlist.fm page');
+        log('5. Try again');
+      }
     }
   }
 
