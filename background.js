@@ -91,7 +91,7 @@ async function startPlaylistCreation(tabId) {
 
   try {
     // Get HTML from content script
-    const [tab] = await chrome.tabs.query({ tabId });
+    const tab = await chrome.tabs.get(tabId);
     if (!tab || !tab.url || !tab.url.includes('setlist.fm')) {
       throw new Error('Please open a setlist.fm page first');
     }
