@@ -1,156 +1,201 @@
 
 (function(){
-  const API_BASE = 'https://setlist2youtube-backend.onrender.com';
-  let s2yLogs = [];
-  let s2yUnfound = [];
+  let currentJob = null;
+  let progressListener = null;
   
-  var logEl = document.getElementById('log');
-  function log(msg){ logEl.textContent += (msg + "\n"); s2yLogs.push(msg); logEl.scrollTop = logEl.scrollHeight; }
-  function clearLog(){ logEl.textContent = ''; s2yLogs = []; s2yUnfound = []; }
-
-  async function getAccessToken(){
-    return new Promise((resolve, reject) => {
-      chrome.identity.getAuthToken({ interactive: true }, (token) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-          return;
-        }
-        if (!token) {
-          reject(new Error('No access token received'));
-          return;
-        }
-        resolve(token);
-      });
-    });
+  const logEl = document.getElementById('log');
+  const createBtn = document.getElementById('createBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  
+  function log(msg){ 
+    logEl.textContent += (msg + "\n"); 
+    logEl.scrollTop = logEl.scrollHeight; 
+  }
+  
+  function clearLog(){ 
+    logEl.textContent = ''; 
   }
 
-  function withActiveTab(cb){
-    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs){ cb(tabs && tabs[0]); });
+  function updateButtonState() {
+    if (currentJob && (currentJob.status === 'starting' || currentJob.status === 'parsing' || 
+                       currentJob.status === 'running' || currentJob.status === 'creating_playlist')) {
+      createBtn.disabled = true;
+      createBtn.textContent = 'Creating Playlist...';
+    } else {
+      createBtn.disabled = false;
+      createBtn.textContent = 'Create Playlist';
+    }
+    
+    if (currentJob) {
+      clearBtn.style.display = 'inline-block';
+    } else {
+      clearBtn.style.display = 'none';
+    }
   }
 
-  document.getElementById('createBtn').addEventListener('click', async function(){
-    clearLog();
-    log('Starting playlist creation...');
-    let token;
-    try {
-      token = await getAccessToken();
-      log('✓ Authenticated with Google');
-    } catch (e) {
-      log('❌ Auth failed: ' + (e && e.message || e));
+  function displayJobStatus() {
+    if (!currentJob) {
+      clearLog();
+      log('No active playlist creation job.');
       return;
     }
 
-    withActiveTab(function(tab){
-      if (!tab) { log('❌ No active tab'); return; }
+    clearLog();
+    
+    // Display current status
+    switch (currentJob.status) {
+      case 'starting':
+        log('🚀 Starting playlist creation...');
+        break;
+      case 'parsing':
+        log('📄 Parsing setlist...');
+        break;
+      case 'running':
+        log('🔍 Searching for videos...');
+        if (currentJob.songs && currentJob.songs.length > 0) {
+          log(`✓ Found ${currentJob.songs.length} songs for ${currentJob.artist || 'Unknown Artist'}`);
+        }
+        break;
+      case 'creating_playlist':
+        log('🎵 Creating YouTube playlist...');
+        break;
+      case 'completed':
+        log('✅ Playlist created successfully!');
+        if (currentJob.playlistUrl) {
+          log(`🔗 Playlist URL: ${currentJob.playlistUrl}`);
+        }
+        if (currentJob.videoIds && currentJob.videoIds.length > 0) {
+          log(`📹 ${currentJob.videoIds.length} videos added to playlist`);
+        }
+        break;
+      case 'error':
+        log('❌ Playlist creation failed');
+        break;
+    }
+
+    // Display progress if searching
+    if (currentJob.status && currentJob.status.startsWith('searching_')) {
+      const match = currentJob.status.match(/searching_(\d+)_(\d+)/);
+      if (match) {
+        const current = parseInt(match[1]);
+        const total = parseInt(match[2]);
+        log(`🔍 Progress: ${current}/${total} songs processed`);
+      }
+    }
+
+    // Display found videos
+    if (currentJob.videoIds && currentJob.videoIds.length > 0) {
+      log(`\n📹 Videos found: ${currentJob.videoIds.length}`);
+    }
+
+    // Display errors if any
+    if (currentJob.errors && currentJob.errors.length > 0) {
+      log(`\n⚠️ Errors encountered:`);
+      currentJob.errors.forEach(error => log(`  • ${error}`));
+    }
+
+    // Display timing info
+    if (currentJob.startTime) {
+      const elapsed = Math.round((Date.now() - currentJob.startTime) / 1000);
+      log(`\n⏱️ Elapsed time: ${elapsed}s`);
+    }
+
+    updateButtonState();
+  }
+
+  async function getJobStatus() {
+    try {
+      const response = await chrome.runtime.sendMessage({ type: 'S2Y_STATUS' });
+      currentJob = response.job;
+      displayJobStatus();
+    } catch (e) {
+      console.error('Failed to get job status:', e);
+    }
+  }
+
+  function setupProgressListener() {
+    // Remove existing listener
+    if (progressListener) {
+      chrome.runtime.onMessage.removeListener(progressListener);
+    }
+
+    // Set up new listener for progress updates
+    progressListener = (message) => {
+      if (message.type === 'S2Y_PROGRESS') {
+        currentJob = message.job;
+        displayJobStatus();
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(progressListener);
+  }
+
+  async function startPlaylistCreation() {
+    try {
+      // Get active tab
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab) {
+        log('❌ No active tab');
+        return;
+      }
+
       if (!tab.url || !tab.url.includes('setlist.fm')) {
         log('❌ Please open a setlist.fm page first');
         return;
       }
-      
-      chrome.tabs.sendMessage(tab.id, { type: 'S2Y_GET_HTML' }, async function(payload){
-        if (!payload || !payload.html){ 
-          log('❌ Failed to read page HTML');
-          log('Debug: Make sure you are on a setlist.fm page and the extension is loaded properly');
-          return; 
-        }
-        
-        try {
-          log('📄 Parsing setlist...');
-          const parseRes = await fetch(API_BASE + '/api/parse', { 
-            method:'POST', 
-            headers:{'Content-Type':'application/json'}, 
-            body: JSON.stringify({ html: payload.html }) 
-          });
-          
-          if (!parseRes.ok){ 
-            const errorText = await parseRes.text();
-            log('❌ Parse API error: ' + parseRes.status);
-            log('Error details: ' + errorText);
-            return;
-          }
-          
-          const data = await parseRes.json();
-          const songs = Array.isArray(data.songs) ? data.songs : [];
-          log('✓ Found ' + songs.length + ' songs for ' + (data.artist || 'Unknown Artist'));
 
-          if (songs.length === 0) {
-            log('❌ No songs found in setlist');
-            log('This might be a page layout we do not support yet');
-            return;
-          }
-
-          const videoIds = [];
-          let idx = 0;
-          for (const song of songs){
-            idx += 1;
-            log('🔍 [' + idx + '/' + songs.length + '] ' + song.title + ' – ' + song.artist);
-            
-            try {
-              const res = await fetch(API_BASE + '/api/youtube/search', { 
-                method:'POST', 
-                headers:{'Content-Type':'application/json'}, 
-                body: JSON.stringify({ accessToken: token, title: song.title, artist: song.artist }) 
-              });
-              
-              if (res.ok) {
-                const js = await res.json();
-                if (js && js.videoId){ 
-                  videoIds.push(js.videoId); 
-                  log('  ✓ Found video');
-                } else { 
-                  log('  ❌ Not found'); 
-                  s2yUnfound.push(song);
-                }
-              } else {
-                log('  ❌ Search failed: ' + res.status);
-                s2yUnfound.push(song);
-              }
-            } catch (searchError) {
-              log('  ❌ Search error: ' + (searchError && searchError.message || searchError));
-              s2yUnfound.push(song);
-            }
-          }
-
-          if (videoIds.length === 0) {
-            log('❌ No videos found for any songs');
-            return;
-          }
-
-          const playlistTitle = `${data.artist || 'Artist'} – Setlist Playlist`;
-          log('🎵 Creating playlist: ' + playlistTitle);
-          const playlistRes = await fetch(API_BASE + '/api/youtube/playlist', { 
-            method:'POST', 
-            headers:{'Content-Type':'application/json'}, 
-            body: JSON.stringify({ 
-              accessToken: token, 
-              title: playlistTitle, 
-              privacyStatus: 'unlisted', 
-              videoIds 
-            }) 
-          });
-          
-          if (playlistRes.ok) {
-            const playlistJson = await playlistRes.json();
-            if (playlistJson && playlistJson.playlistId){
-              const url = 'https://www.youtube.com/playlist?list=' + playlistJson.playlistId;
-              log('✅ Success! Opening playlist...');
-              if (s2yUnfound.length > 0) {
-                log('⚠️  ' + s2yUnfound.length + ' songs not found');
-              }
-              chrome.tabs.create({ url });
-            } else {
-              log('❌ Failed to create playlist - invalid response');
-            }
-          } else {
-            const errorText = await playlistRes.text();
-            log('❌ Failed to create playlist: ' + playlistRes.status);
-            log('Error: ' + errorText);
-          }
-        } catch (e) {
-          log('❌ Error: ' + (e && e.message || e));
-          console.error('Full error:', e);
-        }
+      // Send start command to background
+      const response = await chrome.runtime.sendMessage({ 
+        type: 'S2Y_START', 
+        tabId: tab.id 
       });
-    });
+
+      if (response.success) {
+        log('🚀 Playlist creation started in background');
+        log('You can now navigate to other tabs - the job will continue running');
+        // Get updated status
+        await getJobStatus();
+      } else {
+        log('❌ Failed to start playlist creation: ' + (response.error || 'Unknown error'));
+      }
+
+    } catch (e) {
+      log('❌ Error starting playlist creation: ' + (e && e.message || e));
+    }
+  }
+
+  async function clearJob() {
+    try {
+      const response = await chrome.runtime.sendMessage({ type: 'S2Y_CLEAR' });
+      if (response.success) {
+        currentJob = null;
+        displayJobStatus();
+      }
+    } catch (e) {
+      console.error('Failed to clear job:', e);
+    }
+  }
+
+  // Event listeners
+  createBtn.addEventListener('click', startPlaylistCreation);
+  clearBtn.addEventListener('click', clearJob);
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Set up progress listener
+    setupProgressListener();
+    
+    // Get current job status
+    await getJobStatus();
+    
+    // Set up periodic status check (fallback)
+    setInterval(getJobStatus, 2000);
+  });
+
+  // Clean up listener when popup closes
+  window.addEventListener('unload', () => {
+    if (progressListener) {
+      chrome.runtime.onMessage.removeListener(progressListener);
+    }
   });
 })();
