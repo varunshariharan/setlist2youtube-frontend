@@ -118,6 +118,70 @@ describe('Frontend ↔ Backend Integration Tests', () => {
         firstSong: `${result.data.songs[0].title} by ${result.data.songs[0].artist}`
       });
     }, 10000);
+
+    it('should handle Steven Wilson setlist structure without navigation pollution', async () => {
+      const stevenWilsonHtml = `
+        <html>
+          <head>
+            <title>Steven Wilson Setlist La Riviera, Madrid, Spain 2025, The Overview - setlist.fm</title>
+          </head>
+          <body>
+            <nav>
+              <ul>
+                <li>Setlists</li>
+                <li>Artists</li>
+                <li>Festivals</li>
+                <li>Venues</li>
+                <li>Statistics</li>
+                <li>News</li>
+                <li>Forum</li>
+              </ul>
+            </nav>
+            <main>
+              <h1>**Steven Wilson Setlist** at La Riviera, Madrid, Spain</h1>
+              <ol>
+                <li>Objects Outlive Us Play Video</li>
+                <li>The Overview Play Video</li>
+                <li>The Harmony Codex Play Video</li>
+                <li>Home Invasion Play Video</li>
+                <li>Voyage 34 (Phase I) (Porcupine Tree song) Play Video</li>
+                <li>Dislocated Day (Porcupine Tree song) Play Video</li>
+                <li>Ancestral Play Video</li>
+              </ol>
+            </main>
+          </body>
+        </html>
+      `;
+      
+      const result = await parseSetlistHtml(PRODUCTION_API, stevenWilsonHtml);
+      expect(result.success).toBe(true);
+      expect(result.data.artist).toBe('Steven Wilson');
+      
+      // Should find actual songs, not navigation items
+      expect(result.data.songs.length).toBeGreaterThan(5);
+      expect(result.data.songs.length).toBeLessThan(20); // Reasonable range
+      
+      // Should extract song titles without "Play Video"
+      expect(result.data.songs[0].title).toBe('Objects Outlive Us');
+      expect(result.data.songs[1].title).toBe('The Overview');
+      expect(result.data.songs[0].artist).toBe('Steven Wilson');
+      
+      // Should handle Porcupine Tree covers
+      const porcupineSong = result.data.songs.find(s => s.title.includes('Voyage 34') || s.title.includes('Dislocated Day'));
+      expect(porcupineSong).toBeDefined();
+      
+      // Should NOT include navigation items as songs
+      const navigationItems = ['Setlists', 'Artists', 'Festivals', 'Venues', 'Statistics', 'News', 'Forum'];
+      for (const song of result.data.songs) {
+        expect(navigationItems).not.toContain(song.title);
+      }
+      
+      console.log('✅ Steven Wilson structure parsed correctly:', {
+        artist: result.data.artist,
+        songCount: result.data.songs.length,
+        songs: result.data.songs.slice(0, 3).map(s => `${s.title} by ${s.artist}`)
+      });
+    }, 10000);
   });
 
   describe('Staging Backend Integration', () => {
