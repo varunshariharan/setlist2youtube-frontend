@@ -136,7 +136,9 @@ async function startPlaylistCreation(tabId) {
     }
 
     const data = await parseRes.json();
-    const songs = Array.isArray(data.songs) ? data.songs : [];
+    // Backend returns { success, data: { artist, songs }, stats }
+    const parsed = data && data.data ? data.data : {};
+    const songs = Array.isArray(parsed.songs) ? parsed.songs : [];
     
     if (songs.length === 0) {
       throw new Error('No songs found in setlist');
@@ -144,7 +146,7 @@ async function startPlaylistCreation(tabId) {
 
     updateJobProgress({
       status: 'running',
-      artist: data.artist,
+      artist: parsed.artist,
       songs: songs
     });
 
@@ -182,7 +184,8 @@ async function searchVideos() {
           body: JSON.stringify({ 
             accessToken: token, 
             title: song.title, 
-            artist: song.artist 
+            artist: song.artist,
+            album: song.album // Pass album if available
           })
         });
 

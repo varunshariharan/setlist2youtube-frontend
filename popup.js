@@ -28,14 +28,15 @@
       <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">
         🎵 Parsed Songs (${currentJob.songs.length})
       </div>
-      ${currentJob.songs.map((song, index) => `
-        <div class="song-item">
-          <span style="color: #9ca3af; font-size: 10px;">${index + 1}.</span>
-          <span class="song-title">${escapeHtml(song.title)}</span>
-          <br>
-          <span class="song-artist">by ${escapeHtml(song.artist)}</span>
-        </div>
-      `).join('')}
+                 ${currentJob.songs.map((song, index) => `
+             <div class="song-item">
+               <span style="color: #9ca3af; font-size: 10px;">${index + 1}.</span>
+               <span class="song-title">${escapeHtml(song.title)}</span>
+               <br>
+               <span class="song-artist">by ${escapeHtml(song.artist)}</span>
+               ${song.album ? `<br><span style="color: #9ca3af; font-size: 9px;">from ${escapeHtml(song.album)}</span>` : ''}
+             </div>
+           `).join('')}
     `;
   }
 
