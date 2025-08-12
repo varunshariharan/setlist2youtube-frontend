@@ -140,13 +140,23 @@ describe('Frontend ↔ Backend Integration Tests', () => {
             <main>
               <h1>**Steven Wilson Setlist** at La Riviera, Madrid, Spain</h1>
               <ol>
+                <li>Set 1: The Overview</li>
                 <li>Objects Outlive Us Play Video</li>
                 <li>The Overview Play Video</li>
+                <li>Set 2:</li>
                 <li>The Harmony Codex Play Video</li>
                 <li>Home Invasion Play Video</li>
+                <li>Regret #9 Play Video</li>
+                <li>What Life Brings Play Video</li>
                 <li>Voyage 34 (Phase I) (Porcupine Tree song) Play Video</li>
                 <li>Dislocated Day (Porcupine Tree song) Play Video</li>
+                <li>Abandoner Play Video</li>
+                <li>Impossible Tightrope Play Video</li>
+                <li>Harmony Korine Play Video</li>
+                <li>Vermillioncore Play Video</li>
+                <li>Encore:</li>
                 <li>Ancestral Play Video</li>
+                <li>The Raven That Refused to Sing Play Video</li>
               </ol>
             </main>
           </body>
@@ -157,29 +167,36 @@ describe('Frontend ↔ Backend Integration Tests', () => {
       expect(result.success).toBe(true);
       expect(result.data.artist).toBe('Steven Wilson');
       
-      // Should find actual songs, not navigation items
-      expect(result.data.songs.length).toBeGreaterThan(5);
-      expect(result.data.songs.length).toBeLessThan(20); // Reasonable range
+      // Should find exactly 14 songs (no set markers, no navigation items)
+      expect(result.data.songs.length).toBe(14);
       
       // Should extract song titles without "Play Video"
       expect(result.data.songs[0].title).toBe('Objects Outlive Us');
       expect(result.data.songs[1].title).toBe('The Overview');
       expect(result.data.songs[0].artist).toBe('Steven Wilson');
       
-      // Should handle Porcupine Tree covers
-      const porcupineSong = result.data.songs.find(s => s.title.includes('Voyage 34') || s.title.includes('Dislocated Day'));
-      expect(porcupineSong).toBeDefined();
+      // Should handle Porcupine Tree covers correctly
+      const voyage34 = result.data.songs.find(s => s.title.includes('Voyage 34'));
+      const dislocatedDay = result.data.songs.find(s => s.title.includes('Dislocated Day'));
       
-      // Should NOT include navigation items as songs
+      expect(voyage34).toBeDefined();
+      expect(voyage34.artist).toBe('Porcupine Tree');
+      expect(dislocatedDay).toBeDefined(); 
+      expect(dislocatedDay.artist).toBe('Porcupine Tree');
+      
+      // Should NOT include navigation items or set markers as songs
       const navigationItems = ['Setlists', 'Artists', 'Festivals', 'Venues', 'Statistics', 'News', 'Forum'];
+      const setMarkers = ['Set 1: The Overview', 'Set 2:', 'Encore:'];
       for (const song of result.data.songs) {
         expect(navigationItems).not.toContain(song.title);
+        expect(setMarkers).not.toContain(song.title);
       }
       
       console.log('✅ Steven Wilson structure parsed correctly:', {
         artist: result.data.artist,
         songCount: result.data.songs.length,
-        songs: result.data.songs.slice(0, 3).map(s => `${s.title} by ${s.artist}`)
+        coverSongs: result.data.songs.filter(s => s.artist !== 'Steven Wilson').length,
+        porcupineTreeCovers: result.data.songs.filter(s => s.artist === 'Porcupine Tree').map(s => s.title)
       });
     }, 10000);
   });
