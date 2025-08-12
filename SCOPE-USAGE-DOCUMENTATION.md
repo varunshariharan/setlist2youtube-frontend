@@ -1,7 +1,7 @@
 # OAuth Scope Usage Documentation - Setlist2YouTube
 
 **Extension Name**: Setlist2YouTube Chrome Extension  
-**OAuth Client ID**: 945658462648-lek4ftihtmdnqlago7m7vrjvpnlg4spj.apps.googleusercontent.com  
+**OAuth Client ID**: 906367633286-f05gt8mtga486g7nd1k23uce95l910rh.apps.googleusercontent.com  
 **Scopes Requested**: `https://www.googleapis.com/auth/youtube`
 
 ---
