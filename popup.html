@@ -4,8 +4,12 @@
     <meta charset="utf-8" />
     <title>Setlist2YouTube</title>
     <style>
-      body{ font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 12px; width: 300px; }
+      body{ font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 12px; width: 350px; }
       #log{ margin-top: 8px; font-size: 12px; white-space: pre-wrap; max-height: 200px; overflow-y: auto; border: 1px solid #e5e7eb; padding: 8px; border-radius: 6px; }
+      #songList{ margin-top: 8px; font-size: 11px; max-height: 150px; overflow-y: auto; border: 1px solid #e5e7eb; padding: 8px; border-radius: 6px; background: #f9fafb; }
+      .song-item{ margin-bottom: 4px; padding: 2px 0; }
+      .song-title{ font-weight: 500; color: #111827; }
+      .song-artist{ color: #6b7280; font-style: italic; }
       button{ background:#111827; color:#fff; border:none; padding:10px 16px; border-radius:6px; cursor:pointer; width: 100%; font-size: 14px; }
       button:hover{ background:#374151; }
     </style>
@@ -16,6 +20,7 @@
       <button id="clearBtn" style="display:none; margin-top:8px; background:#dc2626;">🗑️ Clear Job</button>
     </div>
     <div id="log"></div>
+    <div id="songList" style="display:none;"></div>
     <script src="popup.js"></script>
   </body>
 </html>

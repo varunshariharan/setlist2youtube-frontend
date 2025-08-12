@@ -4,6 +4,7 @@
   let progressListener = null;
   
   const logEl = document.getElementById('log');
+  const songListEl = document.getElementById('songList');
   const createBtn = document.getElementById('createBtn');
   const clearBtn = document.getElementById('clearBtn');
   
@@ -14,6 +15,34 @@
   
   function clearLog(){ 
     logEl.textContent = ''; 
+  }
+
+  function displaySongList() {
+    if (!currentJob || !currentJob.songs || currentJob.songs.length === 0) {
+      songListEl.style.display = 'none';
+      return;
+    }
+
+    songListEl.style.display = 'block';
+    songListEl.innerHTML = `
+      <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">
+        🎵 Parsed Songs (${currentJob.songs.length})
+      </div>
+      ${currentJob.songs.map((song, index) => `
+        <div class="song-item">
+          <span style="color: #9ca3af; font-size: 10px;">${index + 1}.</span>
+          <span class="song-title">${escapeHtml(song.title)}</span>
+          <br>
+          <span class="song-artist">by ${escapeHtml(song.artist)}</span>
+        </div>
+      `).join('')}
+    `;
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   function updateButtonState() {
@@ -101,6 +130,7 @@
     }
 
     updateButtonState();
+    displaySongList();
   }
 
   async function getJobStatus() {
@@ -183,6 +213,7 @@
       if (response.success) {
         currentJob = null;
         displayJobStatus();
+        displaySongList();
       }
     } catch (e) {
       console.error('Failed to clear job:', e);
