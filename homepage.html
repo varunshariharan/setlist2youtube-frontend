@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setlist2YouTube - Convert Setlists to YouTube Playlists</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 60px;
+        }
+        .header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .header p {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .main-content {
+            background: white;
+            border-radius: 15px;
+            padding: 50px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        .feature {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        .feature h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+        .feature p {
+            color: #666;
+            margin: 0;
+        }
+        .cta-section {
+            text-align: center;
+            background: #2c3e50;
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+        }
+        .cta-section h2 {
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+        .cta-section p {
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        .btn {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+        }
+        .btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid white;
+        }
+        .btn-secondary:hover {
+            background: white;
+            color: #2c3e50;
+        }
+        .footer {
+            text-align: center;
+            color: white;
+            opacity: 0.8;
+            margin-top: 40px;
+        }
+        .footer a {
+            color: white;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        .tech-stack {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 30px 0;
+        }
+        .tech-stack h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .tech-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+        .tech-item {
+            background: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 1px solid #dee2e6;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Setlist2YouTube</h1>
+            <p>Convert setlists from setlist.fm into YouTube playlists with one click</p>
+        </div>
+
+        <div class="main-content">
+            <h2 style="text-align: center; color: #2c3e50; margin-bottom: 30px;">How It Works</h2>
+            
+            <div class="features">
+                <div class="feature">
+                    <h3>🔍 Smart Parsing</h3>
+                    <p>Automatically detects and extracts song information from setlist.fm pages, including artist names, song titles, and album information.</p>
+                </div>
+                <div class="feature">
+                    <h3>🎯 Intelligent Search</h3>
+                    <p>Uses advanced algorithms to find the best YouTube videos for each song, with album-enhanced search for improved accuracy.</p>
+                </div>
+                <div class="feature">
+                    <h3>📱 Chrome Extension</h3>
+                    <p>Seamlessly integrates with your browser. Just click the extension icon on any setlist.fm page to get started.</p>
+                </div>
+                <div class="feature">
+                    <h3>🔒 Privacy First</h3>
+                    <p>All data is stored locally on your device. We never collect or store your personal information.</p>
+                </div>
+                <div class="feature">
+                    <h3>⚡ Fast & Efficient</h3>
+                    <p>Creates playlists in minutes, not hours. Smart caching and optimization for the best performance.</p>
+                </div>
+                <div class="feature">
+                    <h3>🎵 MusicBrainz Integration</h3>
+                    <p>Uses MusicBrainz data to canonicalize song titles and improve search accuracy for better video matches.</p>
+                </div>
+            </div>
+
+            <div class="tech-stack">
+                <h3>Built With Modern Technology</h3>
+                <div class="tech-list">
+                    <span class="tech-item">Chrome Extension Manifest V3</span>
+                    <span class="tech-item">YouTube Data API v3</span>
+                    <span class="tech-item">MusicBrainz API</span>
+                    <span class="tech-item">Modern JavaScript (ES6+)</span>
+                    <span class="tech-item">Chrome Storage API</span>
+                    <span class="tech-item">OAuth 2.0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <h2>Ready to Create Your First Playlist?</h2>
+            <p>Install the Chrome extension and start converting setlists to YouTube playlists in minutes.</p>
+            <a href="https://github.com/varunshariharan/setlist2youtube-frontend" class="btn" target="_blank">View on GitHub</a>
+            <a href="https://github.com/varunshariharan/setlist2youtube-frontend/issues" class="btn btn-secondary" target="_blank">Report Issues</a>
+        </div>
+
+        <div class="footer">
+            <p>
+                <a href="privacy-policy.html">Privacy Policy</a> | 
+                <a href="terms-of-service.html">Terms of Service</a> | 
+                <a href="https://github.com/varunshariharan/setlist2youtube-frontend" target="_blank">GitHub</a>
+            </p>
+            <p>&copy; 2025 Setlist2YouTube. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
