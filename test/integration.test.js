@@ -46,8 +46,77 @@ describe('Frontend ↔ Backend Integration Tests', () => {
       `;
 
       // Backend returns 422 for HTML that can't be parsed, which is correct behavior
+      // Should now provide specific error about missing artist or songs
       await expect(parseSetlistHtml(PRODUCTION_API, malformedHtml))
-        .rejects.toThrow(/Parse API error 422/);
+        .rejects.toThrow(/Parse API error 422.*(?:No artist information found|No songs found)/);
+    }, 10000);
+
+    it('should provide specific error messages for different parsing failures', async () => {
+      // Test case 1: Missing artist
+      const noArtistHtml = `
+        <html>
+          <body>
+            <ol class="setlistSongs">
+              <li><a href="/song/test">Test Song</a></li>
+            </ol>
+          </body>
+        </html>
+      `;
+
+      await expect(parseSetlistHtml(PRODUCTION_API, noArtistHtml))
+        .rejects.toThrow(/Parse API error 422.*No artist information found/);
+
+      // Test case 2: Missing songs
+      const noSongsHtml = `
+        <html>
+          <body>
+            <div id="s2y-artist">Test Artist</div>
+            <div>No songs here</div>
+          </body>
+        </html>
+      `;
+
+      await expect(parseSetlistHtml(PRODUCTION_API, noSongsHtml))
+        .rejects.toThrow(/Parse API error 422.*No songs found/);
+    }, 15000);
+
+    it('should parse real setlist.fm page structure correctly', async () => {
+      // Test with structure matching the actual setlist.fm page
+      const realSetlistHtml = `
+        <html>
+          <head>
+            <title>Projekt: Hybrid Theory Setlist Park City Music Hall, Bridgeport, CT, USA 2025</title>
+          </head>
+          <body>
+            <h1>**Projekt: Hybrid Theory Setlist** at Park City Music Hall, Bridgeport, CT, USA</h1>
+            <ol>
+              <li>One Step Closer<br/>(Linkin Park cover)</li>
+              <li>From the Inside<br/>(Linkin Park cover)</li>
+              <li>Points of Authority<br/>(Linkin Park cover)</li>
+              <li>Numb<br/>(Linkin Park cover)</li>
+              <li>In the End<br/>(Linkin Park cover)</li>
+            </ol>
+          </body>
+        </html>
+      `;
+
+      const result = await parseSetlistHtml(PRODUCTION_API, realSetlistHtml);
+      
+      expect(result.success).toBe(true);
+      expect(result.data.artist).toBe('Projekt: Hybrid Theory');
+      expect(result.data.songs).toHaveLength(5);
+      
+      // Verify cover artist extraction works
+      expect(result.data.songs[0].title).toBe('One Step Closer');
+      expect(result.data.songs[0].artist).toBe('Linkin Park');
+      expect(result.data.songs[4].title).toBe('In the End');
+      expect(result.data.songs[4].artist).toBe('Linkin Park');
+      
+      console.log('✅ Real setlist.fm structure parsed successfully:', {
+        artist: result.data.artist,
+        songCount: result.data.songs.length,
+        firstSong: `${result.data.songs[0].title} by ${result.data.songs[0].artist}`
+      });
     }, 10000);
   });
 
