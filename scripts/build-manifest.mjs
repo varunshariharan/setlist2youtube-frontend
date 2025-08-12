@@ -11,7 +11,13 @@ const outPath = path.join(root, 'manifest.json');
 
 const clientId = process.env.GOOGLE_CLIENT_ID;
 if (!clientId) {
-  console.error('GOOGLE_CLIENT_ID is not set. Aborting manifest build.');
+  console.error('🚨 GOOGLE_CLIENT_ID is not set. Aborting manifest build.');
+  console.error('');
+  console.error('To fix this:');
+  console.error('  1. See OAUTH-SETUP.md for detailed instructions');
+  console.error('  2. Set environment variable: export GOOGLE_CLIENT_ID="your-client-id"');
+  console.error('  3. For testing: npm run build:test');
+  console.error('');
   process.exit(1);
 }
 

@@ -6,7 +6,10 @@
   "scripts": {
     "test": "vitest --run",
     "test:watch": "vitest",
-    "build": "node scripts/build-manifest.mjs"
+    "build": "node scripts/build-manifest.mjs",
+    "build:test": "GOOGLE_CLIENT_ID=test-client-id node scripts/build-manifest.mjs",
+    "build:dev": "node scripts/build-manifest.mjs --env=dev",
+    "setup:oauth": "echo 'Please see OAUTH-SETUP.md for detailed instructions'"
   },
   "repository": {
     "type": "git",
