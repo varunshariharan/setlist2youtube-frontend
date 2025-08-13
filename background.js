@@ -298,8 +298,12 @@ async function createPlaylist(token) {
 
     if (playlistRes.ok) {
       const playlistJson = await playlistRes.json();
-      if (playlistJson && playlistJson.playlistId) {
-        const url = 'https://www.youtube.com/playlist?list=' + playlistJson.playlistId;
+      console.log('[DEBUG] Playlist creation response:', playlistJson);
+      
+      if (playlistJson && playlistJson.success && playlistJson.data && playlistJson.data.playlistId) {
+        const url = 'https://www.youtube.com/playlist?list=' + playlistJson.data.playlistId;
+        console.log('[DEBUG] Playlist created successfully, URL:', url);
+        
         updateJobProgress({
           status: 'completed',
           playlistUrl: url,
@@ -309,7 +313,8 @@ async function createPlaylist(token) {
         // Open playlist in new tab
         chrome.tabs.create({ url });
       } else {
-        throw new Error('Invalid playlist response');
+        console.log('[DEBUG] Invalid playlist response structure:', playlistJson);
+        throw new Error('Invalid playlist response structure');
       }
     } else {
       const errorText = await playlistRes.text();

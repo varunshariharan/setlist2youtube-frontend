@@ -93,6 +93,7 @@
         log('✅ Playlist created successfully!');
         if (currentJob.playlistUrl) {
           log(`🔗 Playlist URL: ${currentJob.playlistUrl}`);
+          log('🎉 Your playlist is ready! Click the URL above to open it.');
         }
         if (currentJob.videoIds && currentJob.videoIds.length > 0) {
           log(`📹 ${currentJob.videoIds.length} videos added to playlist`);
@@ -100,6 +101,10 @@
         break;
       case 'error':
         log('❌ Playlist creation failed');
+        if (currentJob.errors && currentJob.errors.length > 0) {
+          log('📋 Error details:');
+          currentJob.errors.forEach(error => log(`  • ${error}`));
+        }
         break;
     }
 
