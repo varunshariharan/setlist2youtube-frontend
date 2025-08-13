@@ -151,6 +151,7 @@ async function startPlaylistCreation(tabId) {
     });
 
     // Start searching for videos
+    console.log('[DEBUG] Starting video search for', songs.length, 'songs');
     await searchVideos();
 
   } catch (error) {
@@ -163,10 +164,16 @@ async function startPlaylistCreation(tabId) {
 }
 
 async function searchVideos() {
-  if (!currentJob || currentJob.status !== 'searching') return;
+  console.log('[DEBUG] searchVideos called with status:', currentJob?.status);
+  if (!currentJob || (currentJob.status !== 'running' && currentJob.status !== 'searching')) {
+    console.log('[DEBUG] searchVideos returning early - invalid status or no job');
+    return;
+  }
 
   try {
+    console.log('[DEBUG] Getting access token...');
     const token = await getAccessToken();
+    console.log('[DEBUG] Access token received, length:', token?.length);
     updateJobProgress({ status: 'running' });
 
     for (let i = currentJob.progressIndex; i < currentJob.songs.length; i++) {
@@ -178,6 +185,7 @@ async function searchVideos() {
       });
 
       try {
+        console.log('[DEBUG] Searching for song:', song.title, 'by', song.artist);
         const res = await fetch(API_BASE + '/api/youtube/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
