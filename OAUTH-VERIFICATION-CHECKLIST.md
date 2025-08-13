@@ -1,7 +1,7 @@
 # Google OAuth Verification Checklist - Setlist2YouTube
 
 **Extension**: Setlist2YouTube Chrome Extension  
-**OAuth Client ID**: 906367633286-f05gt8mtga486g7nd1k23uce95l910rh.apps.googleusercontent.com  
+**OAuth Client ID**: 710891621158-7v44loj77qcmr37qb0h3le1iop32he5o.apps.googleusercontent.com  
 **Status**: Ready for verification submission  
 
 ---

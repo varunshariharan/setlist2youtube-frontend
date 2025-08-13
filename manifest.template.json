@@ -17,7 +17,7 @@
     "https://www.googleapis.com/*"
   ],
   "oauth2": {
-    "client_id": "906367633286-f05gt8mtga486g7nd1k23uce95l910rh.apps.googleusercontent.com",
+    "client_id": "710891621158-7v44loj77qcmr37qb0h3le1iop32he5o.apps.googleusercontent.com",
     "scopes": ["https://www.googleapis.com/auth/youtube"]
   },
   "action": {
