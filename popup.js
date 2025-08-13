@@ -6,7 +6,6 @@
   const logEl = document.getElementById('log');
   const songListEl = document.getElementById('songList');
   const createBtn = document.getElementById('createBtn');
-  const clearBtn = document.getElementById('clearBtn');
   
   function log(msg){ 
     logEl.textContent += (msg + "\n"); 
@@ -56,11 +55,7 @@
       createBtn.textContent = 'Create Playlist';
     }
     
-    if (currentJob) {
-      clearBtn.style.display = 'inline-block';
-    } else {
-      clearBtn.style.display = 'none';
-    }
+    // Clear button removed - no longer needed
   }
 
   function displayJobStatus() {
@@ -219,22 +214,10 @@
     }
   }
 
-  async function clearJob() {
-    try {
-      const response = await chrome.runtime.sendMessage({ type: 'S2Y_CLEAR' });
-      if (response.success) {
-        currentJob = null;
-        displayJobStatus();
-        displaySongList();
-      }
-    } catch (e) {
-      console.error('Failed to clear job:', e);
-    }
-  }
+  // Clear job functionality removed - no longer needed
 
   // Event listeners
   createBtn.addEventListener('click', startPlaylistCreation);
-  clearBtn.addEventListener('click', clearJob);
 
   // Initialize
   document.addEventListener('DOMContentLoaded', async () => {

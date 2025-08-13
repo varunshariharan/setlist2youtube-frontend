@@ -414,12 +414,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
   
-  if (message.type === 'S2Y_CLEAR') {
-    currentJob = null;
-    chrome.storage.local.remove(['s2y_job']);
-    sendResponse({ success: true });
-    return false;
-  }
+  // S2Y_CLEAR handler removed - no longer needed
 });
 
 // Re-inject content script on SPA navigations
