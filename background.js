@@ -72,6 +72,7 @@ async function getAccessToken() {
 }
 
 async function startPlaylistCreation(tabId) {
+  console.log('🚀 [START] startPlaylistCreation called with tabId:', tabId);
   if (currentJob && currentJob.status === 'running') {
     throw new Error('Another playlist creation is already in progress');
   }
@@ -124,6 +125,7 @@ async function startPlaylistCreation(tabId) {
     console.log('Received HTML from content script, length:', response.html.length);
 
     // Parse setlist
+    console.log('🔍 [PARSE] Calling parse API...');
     const parseRes = await fetch(API_BASE + '/api/parse', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -136,9 +138,12 @@ async function startPlaylistCreation(tabId) {
     }
 
     const data = await parseRes.json();
+    console.log('📊 [PARSE] Parse response:', data);
     // Backend returns { success, data: { artist, songs }, stats }
     const parsed = data && data.data ? data.data : {};
     const songs = Array.isArray(parsed.songs) ? parsed.songs : [];
+    
+    console.log('🎵 [PARSE] Found songs:', songs.length, songs.map(s => s.title));
     
     if (songs.length === 0) {
       throw new Error('No songs found in setlist');
@@ -151,7 +156,8 @@ async function startPlaylistCreation(tabId) {
     });
 
     // Start searching for videos
-    console.log('[DEBUG] Starting video search for', songs.length, 'songs');
+    console.log('🎯 [SEARCH] Starting video search for', songs.length, 'songs');
+    console.log('🎯 [SEARCH] Current job status:', currentJob.status);
     await searchVideos();
 
   } catch (error) {
@@ -292,7 +298,10 @@ async function continueJob() {
 
 // Message handling
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('📨 [MESSAGE] Received message:', message.type, 'from tab:', sender.tab?.id);
+  
   if (message.type === 'S2Y_START') {
+    console.log('🚀 [MESSAGE] Starting playlist creation for tab:', message.tabId);
     startPlaylistCreation(message.tabId)
       .then(() => sendResponse({ success: true }))
       .catch(error => sendResponse({ success: false, error: error.message }));

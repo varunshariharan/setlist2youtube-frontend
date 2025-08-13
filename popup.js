@@ -167,8 +167,12 @@
 
   async function startPlaylistCreation() {
     try {
+      console.log('🎯 [POPUP] startPlaylistCreation called');
+      
       // Get active tab
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      console.log('🎯 [POPUP] Active tab:', tab);
+      
       if (!tab) {
         log('❌ No active tab');
         return;
@@ -179,6 +183,7 @@
         return;
       }
 
+      console.log('🎯 [POPUP] Sending S2Y_START message to background');
       // Send start command to background
       const response = await chrome.runtime.sendMessage({ 
         type: 'S2Y_START', 
