@@ -48,7 +48,15 @@ async function saveJobState() {
 
 function updateJobProgress(updates) {
   if (currentJob) {
-    Object.assign(currentJob, updates);
+    // Ensure all update values are defined before applying
+    const cleanUpdates = {};
+    Object.keys(updates).forEach(key => {
+      if (updates[key] !== undefined && updates[key] !== null) {
+        cleanUpdates[key] = updates[key];
+      }
+    });
+    
+    Object.assign(currentJob, cleanUpdates);
     saveJobState();
     // Notify popup of progress
     chrome.runtime.sendMessage({ type: 'S2Y_PROGRESS', job: currentJob }).catch(() => {});
@@ -182,6 +190,10 @@ async function searchVideos() {
     console.log('[DEBUG] Access token received, length:', token?.length);
     updateJobProgress({ status: 'running' });
 
+    // Create a map to maintain song order
+    const songVideoMap = new Map();
+    const songErrors = [];
+    
     for (let i = currentJob.progressIndex; i < currentJob.songs.length; i++) {
       const song = currentJob.songs[i];
       
@@ -209,24 +221,39 @@ async function searchVideos() {
           
           if (js && js.success && js.data && js.data.videoId) {
             console.log('[DEBUG] Found video ID:', js.data.videoId, 'for song:', song.title);
-            currentJob.videoIds.push(js.data.videoId);
-            updateJobProgress({ videoIds: [...currentJob.videoIds] });
+            // Store video ID with song index to maintain order
+            songVideoMap.set(i, js.data.videoId);
           } else {
             console.log('[DEBUG] No video ID found in response:', js);
-            currentJob.errors.push(`Song not found: ${song.title} - ${song.artist}`);
-            updateJobProgress({ errors: [...currentJob.errors] });
+            songErrors.push(`Song not found: ${song.title} - ${song.artist}`);
           }
         } else {
           const errorText = await res.text();
           console.log('[DEBUG] Search failed with status:', res.status, 'error:', errorText);
-          currentJob.errors.push(`Search failed for ${song.title}: ${res.status}`);
-          updateJobProgress({ errors: [...currentJob.errors] });
+          songErrors.push(`Search failed for ${song.title}: ${res.status}`);
         }
       } catch (searchError) {
-        currentJob.errors.push(`Search error for ${song.title}: ${searchError.message}`);
-        updateJobProgress({ errors: [...currentJob.errors] });
+        songErrors.push(`Search error for ${song.title}: ${searchError.message}`);
       }
     }
+    
+    // Build videoIds array in correct song order
+    currentJob.videoIds = [];
+    for (let i = 0; i < currentJob.songs.length; i++) {
+      if (songVideoMap.has(i)) {
+        currentJob.videoIds.push(songVideoMap.get(i));
+      }
+    }
+    
+    // Update errors
+    if (songErrors.length > 0) {
+      currentJob.errors = [...(currentJob.errors || []), ...songErrors];
+    }
+    
+    updateJobProgress({ 
+      videoIds: [...currentJob.videoIds],
+      errors: [...(currentJob.errors || [])]
+    });
 
     // All songs processed, create playlist
     console.log('[DEBUG] Search complete. Found videos:', currentJob.videoIds.length, 'Errors:', currentJob.errors.length);
@@ -349,3 +376,4 @@ chrome.webNavigation.onCompleted.addListener((details) => {
     // no-op
   }
 }, { url: [{ hostEquals: 'www.setlist.fm' }] });
+
