@@ -174,8 +174,8 @@ POST https://www.googleapis.com/youtube/v3/playlistItems
 - **Daily limit**: Well within YouTube API quotas
 
 ### **API Endpoint Usage:**
-- **Search API**: 90% of calls (finding videos)
-- **Playlist API**: 5% of calls (creating playlists)
+- **Search API**: 40% of calls (finding videos)
+- **Playlist API**: 50% of calls (creating playlists)
 - **PlaylistItems API**: 5% of calls (adding videos)
 
 ---
