@@ -193,6 +193,7 @@
       if (response.success) {
         log('🚀 Playlist creation started in background');
         log('You can now navigate to other tabs - the job will continue running');
+        log('🔍 Check background script console for detailed debug info');
         // Get updated status
         await getJobStatus();
       } else {
