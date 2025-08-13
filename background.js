@@ -205,14 +205,20 @@ async function searchVideos() {
 
         if (res.ok) {
           const js = await res.json();
-          if (js && js.videoId) {
-            currentJob.videoIds.push(js.videoId);
+          console.log('[DEBUG] YouTube search response:', js);
+          
+          if (js && js.success && js.data && js.data.videoId) {
+            console.log('[DEBUG] Found video ID:', js.data.videoId, 'for song:', song.title);
+            currentJob.videoIds.push(js.data.videoId);
             updateJobProgress({ videoIds: [...currentJob.videoIds] });
           } else {
+            console.log('[DEBUG] No video ID found in response:', js);
             currentJob.errors.push(`Song not found: ${song.title} - ${song.artist}`);
             updateJobProgress({ errors: [...currentJob.errors] });
           }
         } else {
+          const errorText = await res.text();
+          console.log('[DEBUG] Search failed with status:', res.status, 'error:', errorText);
           currentJob.errors.push(`Search failed for ${song.title}: ${res.status}`);
           updateJobProgress({ errors: [...currentJob.errors] });
         }
@@ -223,9 +229,13 @@ async function searchVideos() {
     }
 
     // All songs processed, create playlist
+    console.log('[DEBUG] Search complete. Found videos:', currentJob.videoIds.length, 'Errors:', currentJob.errors.length);
+    
     if (currentJob.videoIds.length > 0) {
+      console.log('[DEBUG] Creating playlist with', currentJob.videoIds.length, 'videos');
       await createPlaylist(token);
     } else {
+      console.log('[DEBUG] No videos found, updating status to error');
       updateJobProgress({ 
         status: 'error',
         errors: [...currentJob.errors, 'No videos found for any songs']
