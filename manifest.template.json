@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Setlist2YouTube",
+  "name": "Know The Show",
   "version": "0.1.0",
-  "description": "Convert a setlist.fm page into a YouTube playlist in one click.",
+  "description": "Discover and enjoy music from concert setlists. Convert any setlist.fm page into a YouTube playlist in one click.",
   "permissions": [
     "webNavigation", 
     "tabs", 
@@ -22,7 +22,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Setlist2YouTube",
+    "default_title": "Know The Show",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",

@@ -1,6 +1,6 @@
 
 (function(){
-  console.log('Setlist2YouTube content script loaded on:', window.location.href);
+  console.log('Know The Show content script loaded on:', window.location.href);
   console.log('Page readyState:', document.readyState);
   console.log('Document element exists:', !!document.documentElement);
   

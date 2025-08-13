@@ -1,4 +1,4 @@
-# Setlist2YouTube – Frontend (Chrome Extension)
+# Know The Show – Frontend (Chrome Extension)
 
 This repository contains the Chrome extension that converts a setlist from setlist.fm into a playable YouTube playlist.
 
