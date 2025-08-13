@@ -8,13 +8,6 @@
   chrome.runtime.onMessage.addListener(function(message, sender, sendResponse){
     console.log('Content script received message:', message);
     
-    if (message && message.type === 'S2Y_PING'){
-      // Respond to ping to verify content script is active
-      console.log('Content script responding to ping');
-      sendResponse({ type: 'S2Y_PONG', timestamp: Date.now() });
-      return true;
-    }
-    
     if (message && message.type === 'S2Y_GET_HTML'){
       try {
         // Debug information

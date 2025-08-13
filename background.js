@@ -79,51 +79,6 @@ async function getAccessToken() {
   });
 }
 
-async function ensureContentScriptInjected(tabId) {
-  try {
-    // Try to send a ping message to see if content script is already there
-    const pingResponse = await chrome.tabs.sendMessage(tabId, { type: 'S2Y_PING' });
-    if (pingResponse && pingResponse.type === 'S2Y_PONG') {
-      console.log('[CONTENT_SCRIPT] Content script already active');
-      return true;
-    }
-  } catch (e) {
-    console.log('[CONTENT_SCRIPT] Content script not responding, injecting...');
-  }
-  
-  // Inject content script if not present
-  try {
-    const results = await chrome.scripting.executeScript({ 
-      target: { tabId }, 
-      files: ['contentScript.js'] 
-    });
-    
-    if (results && results.length > 0) {
-      console.log('[CONTENT_SCRIPT] Successfully injected content script');
-      
-      // Wait a moment for the script to initialize
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Verify injection worked
-      try {
-        const verifyResponse = await chrome.tabs.sendMessage(tabId, { type: 'S2Y_PING' });
-        if (verifyResponse && verifyResponse.type === 'S2Y_PONG') {
-          console.log('[CONTENT_SCRIPT] Content script verified and ready');
-          return true;
-        }
-      } catch (e) {
-        console.error('[CONTENT_SCRIPT] Content script still not responding after injection');
-        throw new Error('Content script injection failed');
-      }
-    }
-  } catch (e) {
-    console.error('[CONTENT_SCRIPT] Failed to inject content script:', e);
-    throw new Error('Could not inject content script');
-  }
-  
-  return false;
-}
-
 async function startPlaylistCreation(tabId) {
   console.log('🚀 [START] startPlaylistCreation called with tabId:', tabId);
   if (currentJob && currentJob.status === 'running') {
@@ -150,24 +105,10 @@ async function startPlaylistCreation(tabId) {
       throw new Error('Please open a setlist.fm page first');
     }
 
-    // Ensure content script is injected and ready
-    try {
-      await ensureContentScriptInjected(tabId);
-    } catch (injectionError) {
-      console.error('[CONTENT_SCRIPT] Injection failed:', injectionError);
-      throw new Error(`Content script injection failed: ${injectionError.message}. Please refresh the page and try again.`);
-    }
-
     updateJobProgress({ status: 'parsing' });
     
     // Request HTML from content script
-    let response;
-    try {
-      response = await chrome.tabs.sendMessage(tabId, { type: 'S2Y_GET_HTML' });
-    } catch (messageError) {
-      console.error('[CONTENT_SCRIPT] Message failed:', messageError);
-      throw new Error(`Could not communicate with content script: ${messageError.message}. Please refresh the page and try again.`);
-    }
+    const response = await chrome.tabs.sendMessage(tabId, { type: 'S2Y_GET_HTML' });
     
     // Handle error responses from content script
     if (!response) {
@@ -423,39 +364,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // Re-inject content script on SPA navigations
-chrome.webNavigation.onHistoryStateUpdated.addListener(async (details) => {
+chrome.webNavigation.onHistoryStateUpdated.addListener((details) => {
   try {
     if (!details.tabId) return;
-    console.log('[CONTENT_SCRIPT] Injecting on history state update for tab:', details.tabId);
-    
-    const results = await chrome.scripting.executeScript({ 
-      target: { tabId: details.tabId }, 
-      files: ['contentScript.js'] 
-    });
-    
-    if (results && results.length > 0) {
-      console.log('[CONTENT_SCRIPT] Successfully injected on history state update');
-    }
+    chrome.scripting.executeScript({ target: { tabId: details.tabId }, files: ['contentScript.js'] });
   } catch (e) {
-    console.error('[CONTENT_SCRIPT] Failed to inject on history state update:', e);
+    // no-op
   }
 }, { url: [{ hostEquals: 'www.setlist.fm' }] });
 
-chrome.webNavigation.onCompleted.addListener(async (details) => {
+chrome.webNavigation.onCompleted.addListener((details) => {
   try {
     if (!details.tabId) return;
-    console.log('[CONTENT_SCRIPT] Injecting on navigation completed for tab:', details.tabId);
-    
-    const results = await chrome.scripting.executeScript({ 
-      target: { tabId: details.tabId }, 
-      files: ['contentScript.js'] 
-    });
-    
-    if (results && results.length > 0) {
-      console.log('[CONTENT_SCRIPT] Successfully injected on navigation completed');
-    }
+    chrome.scripting.executeScript({ target: { tabId: details.tabId }, files: ['contentScript.js'] });
   } catch (e) {
-    console.error('[CONTENT_SCRIPT] Failed to inject on navigation completed:', e);
+    // no-op
   }
 }, { url: [{ hostEquals: 'www.setlist.fm' }] });
 
